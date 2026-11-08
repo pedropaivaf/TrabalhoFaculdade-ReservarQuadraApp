@@ -1,7 +1,7 @@
 export type Quadra = {
     id: string;
     nome: string;
-    esport: string;
+    esporte: string;
     precoHora: number;
     horarios: string[];
 };

@@ -3,7 +3,7 @@ export type Reserva = {
     usuarioEmail: string;
     quadraId: string;
     quadraNome: string;
-    esport: string;
+    esporte: string;
     data: string;
     horario: string;
 };
