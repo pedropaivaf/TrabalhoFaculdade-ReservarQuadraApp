@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import dicas from '../app/(abas)/dicas';
 
 export const globalStyles = StyleSheet.create({
     container: {
@@ -19,6 +20,15 @@ export const globalStyles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 10,
     },
+
+       tituloDicas: {
+        color: '#22c55e',
+        fontSize: 28,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+
     subtitulo: {
         color: '#fff',
         fontSize: 18,
