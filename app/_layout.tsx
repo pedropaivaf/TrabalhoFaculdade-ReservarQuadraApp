@@ -14,11 +14,6 @@ export default function LayoutPrincipal() {
                     name="(abas)"
                     options={{ headerShown: false }}
                 />
-
-                <Stack.Screen
-                    name="(abas)"
-                    options={{ headerShown: false }}
-                />
                 <Stack.Screen
                     name="cadastro"
                     options={{ headerShown: false }}
