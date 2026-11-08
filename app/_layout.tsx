@@ -15,6 +15,14 @@ export default function LayoutPrincipal() {
                     options={{ headerShown: false }}
                 />
             </Stack>
+            <Stack.Screen
+                name="(abas)"
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="cadastro"
+                options={{ headerShown: false }}
+            />
         </SafeAreaProvider>
     );
 }
