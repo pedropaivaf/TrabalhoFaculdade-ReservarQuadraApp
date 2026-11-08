@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "nome": "Quadra Zico",
+    "esporte": "Futsal",
+    "precoHora": 80,
+    "horarios": ["18:00", "19:00", "20:00", "21:00"]
+  },
+  {
+    "id": "2",
+    "nome": "Quadra Society",
+    "esporte": "Society",
+    "precoHora": 120,
+    "horarios": ["18:00", "19:00", "20:00", "21:00"]
+  },
+  {
+    "id": "3",
+    "nome": "Quadra 1",
+    "esporte": "Beach Tennis",
+    "precoHora": 90,
+    "horarios": ["17:00", "18:00", "19:00", "20:00"]
+  },
+  {
+    "id": "4",
+    "nome": "Ginásio Poliesportivo",
+    "esporte": "Vôlei",
+    "precoHora": 70,
+    "horarios": ["18:00", "19:00", "20:00", "21:00"]
+  }
+]

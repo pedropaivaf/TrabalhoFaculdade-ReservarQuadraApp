@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import dicas from '../app/(abas)/dicas';
 
 export const globalStyles = StyleSheet.create({
     container: {
