@@ -15,7 +15,7 @@ export default function LayoutAbas() {
             }}
         >
             <Tabs.Screen
-                name="index"
+                name="quadras"
                 options={{
                     title: 'Quadras',
                     tabBarIcon: ({ color, size }) => (

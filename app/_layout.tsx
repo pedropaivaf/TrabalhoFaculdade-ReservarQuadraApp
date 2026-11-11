@@ -11,6 +11,10 @@ export default function LayoutPrincipal() {
                 }}
             >
                 <Stack.Screen
+                    name="index"
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
                     name="(abas)"
                     options={{ headerShown: false }}
                 />
