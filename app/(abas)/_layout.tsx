@@ -35,11 +35,11 @@ export default function LayoutAbas() {
             />
 
             <Tabs.Screen
-                name="dicas"
+                name="ia"
                 options={{
-                    title: 'Dicas IA',
+                    title: 'IA',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialIcons name="lightbulb" size={size + 2} color={String(color)} />
+                        <MaterialIcons name="smart-toy" size={size + 2} color={String(color)} />
                     ),
                 }}
             />
