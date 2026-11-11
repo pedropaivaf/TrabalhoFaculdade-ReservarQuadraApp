@@ -114,6 +114,7 @@ export default function QuadrasScreen() {
 
                 <FlatList
                     data={quadras}
+                    showsVerticalScrollIndicator={false}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <View style={styles.card}>
