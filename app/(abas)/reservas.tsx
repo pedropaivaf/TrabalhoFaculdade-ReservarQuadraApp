@@ -71,6 +71,7 @@ export default function ReservasScreen() {
 
                 <FlatList
                     data={minhasReservas}
+                    showsVerticalScrollIndicator={false}
                     keyExtractor={(item) => item.id}
                     ListEmptyComponent={
                         <Text style={styles.vazio}>Você ainda não tem reservas.</Text>

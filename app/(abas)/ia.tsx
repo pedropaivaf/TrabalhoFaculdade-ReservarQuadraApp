@@ -175,7 +175,7 @@ export default function IAScreen() {
 
     return (
         <SafeAreaView style={globalStyles.container} edges={['top']}>
-            <ScrollView contentContainerStyle={styles.scroll}>
+            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
                 <View style={globalStyles.content}>
                     <Text style={globalStyles.titulo}>Assistente IA</Text>
                     <Text style={globalStyles.subtitulo}>

@@ -19,6 +19,22 @@ export default function CadastroScreen() {
             return;
         }
 
+        if (nome.trim().length < 3) {
+            alert('O nome deve ter pelo menos 3 letras.');
+            return;
+        }
+
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+        if (!emailValido) {
+            alert('Digite um e-mail válido.');
+            return;
+        }
+
+        if (senha.length < 6) {
+            alert('A senha deve ter pelo menos 6 caracteres.');
+            return;
+        }
+
         AsyncStorage.getItem(CHAVE_USUARIOS)
             .then((res) => {
                 const usuarios: Usuario[] = res ? JSON.parse(res) : [];
@@ -72,13 +88,14 @@ export default function CadastroScreen() {
                     placeholder="Seu e-mail"
                     placeholderTextColor="#888"
                     autoCapitalize="none"
+                    keyboardType="email-address"
                     style={globalStyles.input}
                 />
 
                 <TextInput
                     value={senha}
                     onChangeText={setSenha}
-                    placeholder="Crie uma senha"
+                    placeholder="Crie uma senha (mín. 6 caracteres)"
                     placeholderTextColor="#888"
                     secureTextEntry
                     style={globalStyles.input}

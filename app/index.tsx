@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { globalStyles } from '../styles/global';
 import { Usuario } from '../src/types/Usuario';
 
@@ -12,6 +12,17 @@ const CHAVE_LOGADO = 'usuario_logado';
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
+    const [verificando, setVerificando] = useState(true);
+    const [jaLogado, setJaLogado] = useState(false);
+
+    useEffect(() => {
+        AsyncStorage.getItem(CHAVE_LOGADO)
+            .then((res) => {
+                setJaLogado(res !== null);
+            })
+            .catch((err) => console.log(err))
+            .finally(() => setVerificando(false));
+    }, []);
 
     const fazerLogin = () => {
         if (!email.trim() || !senha.trim()) {
@@ -42,6 +53,14 @@ export default function LoginScreen() {
                 alert('Erro ao fazer login.');
             });
     };
+
+    if (verificando) {
+        return null;
+    }
+
+    if (jaLogado) {
+        return <Redirect href="/quadras" />;
+    }
 
     return (
         <SafeAreaView style={globalStyles.container}>

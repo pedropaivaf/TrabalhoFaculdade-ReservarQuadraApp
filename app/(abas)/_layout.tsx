@@ -1,7 +1,29 @@
-import { Tabs } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Tabs, Redirect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LayoutAbas() {
+    const [verificando, setVerificando] = useState(true);
+    const [logado, setLogado] = useState(false);
+
+    useEffect(() => {
+        AsyncStorage.getItem('usuario_logado')
+            .then((res) => {
+                setLogado(res !== null);
+            })
+            .catch((err) => console.log(err))
+            .finally(() => setVerificando(false));
+    }, []);
+
+    if (verificando) {
+        return null;
+    }
+
+    if (!logado) {
+        return <Redirect href="/" />;
+    }
+
     return (
         <Tabs
             screenOptions={{
