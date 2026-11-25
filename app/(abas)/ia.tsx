@@ -1,14 +1,15 @@
-import { useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { globalStyles } from '../../styles/global';
 import { Quadra } from '../../src/types/Quadra';
 import { Reserva } from '../../src/types/Reservas';
 import { Usuario } from '../../src/types/Usuario';
-import { dataHoje, horarioJaPassou, reservaAtiva } from '../../src/utils/reservas';
-import ModalConfirmacao from '../../src/components/ModalConfirmacao';
+import { dataHoje, horariosLivres, reservaAtiva } from '../../src/utils/reservas';
+import { ModalConfirmacao } from '../../src/components/ModalConfirmacao';
+import { reservaEvents } from '../../src/events/reservaEvent';
 import dadosQuadras from '../../src/types/data/quadras.json';
 
 const quadras: Quadra[] = dadosQuadras;
@@ -33,33 +34,33 @@ export default function IAScreen() {
     const [mensagem, setMensagem] = useState('');
     const [confirmando, setConfirmando] = useState(false);
 
-    useFocusEffect(
-        useCallback(() => {
-            AsyncStorage.getItem(CHAVE_LOGADO)
-                .then((res) => {
-                    setUsuario(res ? JSON.parse(res) : null);
-                })
-                .catch((err) => console.log(err));
-
-            AsyncStorage.getItem(CHAVE_RESERVAS)
-                .then((res) => {
-                    setReservas(res ? JSON.parse(res) : []);
-                })
-                .catch((err) => console.log(err));
-        }, [])
-    );
-
-    const horarioOcupado = (quadraId: string, horario: string) => {
-        return reservas.some(
-            (r) => r.quadraId === quadraId && r.data === dataHoje() && r.horario === horario
-        );
+    const carregarReservas = () => {
+        AsyncStorage.getItem(CHAVE_RESERVAS)
+            .then((res) => {
+                setReservas(res ? JSON.parse(res) : []);
+            })
+            .catch((err) => console.log(err));
     };
 
-    const horariosLivres = (quadra: Quadra) => {
-        return quadra.horarios.filter(
-            (h) => !horarioJaPassou(h) && !horarioOcupado(quadra.id, h)
-        );
-    };
+    // Para primeira vez que carrega a tela
+    useEffect(() => {
+        AsyncStorage.getItem(CHAVE_LOGADO)
+            .then((res) => {
+                setUsuario(res ? JSON.parse(res) : null);
+            })
+            .catch((err) => console.log(err));
+
+        carregarReservas();
+    }, []);
+
+    // Para quando uma reserva é feita ou cancelada em outra aba
+    useEffect(() => {
+        // ouvir evento e recarregar reservas
+        const subscription = reservaEvents.addListener('reservas:changed', carregarReservas);
+
+        // limpar quando desmontar
+        return () => subscription.remove();
+    }, []);
 
     const pedirSugestao = () => {
         if (!usuario) {
@@ -88,8 +89,8 @@ export default function IAScreen() {
         }
 
         const disponiveis = quadras
-            .filter((q) => horariosLivres(q).length > 0)
-            .map((q) => `id ${q.id} | ${q.nome} | ${q.esporte} | R$ ${q.precoHora}/hora | livres: ${horariosLivres(q).join(', ')}`);
+            .filter((q) => horariosLivres(q, reservas).length > 0)
+            .map((q) => `id ${q.id} | ${q.nome} | ${q.esporte} | R$ ${q.precoHora}/hora | livres: ${horariosLivres(q, reservas).join(', ')}`);
 
         if (disponiveis.length === 0) {
             setSugestao(null);
@@ -129,7 +130,7 @@ export default function IAScreen() {
 
                 const quadra = quadras.find((q) => q.id === resultado.quadraId);
 
-                if (quadra && horariosLivres(quadra).includes(resultado.horario)) {
+                if (quadra && horariosLivres(quadra, reservas).includes(resultado.horario)) {
                     setSugestao({ quadra, horario: resultado.horario, motivo: resultado.motivo });
                 } else {
                     setMensagem(resultado.motivo || 'Nenhuma opção encontrada para o seu pedido.');
@@ -166,6 +167,7 @@ export default function IAScreen() {
                 setSugestao(null);
                 setPedido('');
                 setMensagem('Reserva confirmada! Veja na aba Reservas.');
+                reservaEvents.emit('reservas:changed'); // notifica que as reservas mudaram
             })
             .catch((err) => {
                 console.log(err);

@@ -35,7 +35,7 @@ export default function LoginScreen() {
                 const usuarios: Usuario[] = res ? JSON.parse(res) : [];
 
                 const usuario = usuarios.find(
-                    (u) => u.email === email.trim() && u.senha === senha
+                    (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.senha === senha
                 );
 
                 if (!usuario) {

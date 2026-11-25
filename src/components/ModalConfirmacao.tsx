@@ -10,29 +10,37 @@ type Props = {
     onCancelar: () => void;
 };
 
-export default function ModalConfirmacao(props: Props) {
+export function ModalConfirmacao({
+    visivel,
+    titulo,
+    mensagem,
+    textoConfirmar,
+    corConfirmar = '#22c55e',
+    onConfirmar,
+    onCancelar,
+}: Props) {
     return (
         <Modal
-            visible={props.visivel}
+            visible={visivel}
             transparent
             animationType="fade"
-            onRequestClose={props.onCancelar}
+            onRequestClose={onCancelar}
         >
             <View style={styles.fundo}>
                 <View style={styles.caixa}>
-                    <Text style={styles.titulo}>{props.titulo}</Text>
-                    <Text style={styles.mensagem}>{props.mensagem}</Text>
+                    <Text style={styles.titulo}>{titulo}</Text>
+                    <Text style={styles.mensagem}>{mensagem}</Text>
 
                     <View style={styles.botoes}>
-                        <TouchableOpacity style={[styles.botao, styles.botaoVoltar]} onPress={props.onCancelar}>
+                        <TouchableOpacity style={[styles.botao, styles.botaoVoltar]} onPress={onCancelar}>
                             <Text style={styles.textoBotao}>Voltar</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.botao, { backgroundColor: props.corConfirmar || '#22c55e' }]}
-                            onPress={props.onConfirmar}
+                            style={[styles.botao, { backgroundColor: corConfirmar }]}
+                            onPress={onConfirmar}
                         >
-                            <Text style={styles.textoBotao}>{props.textoConfirmar}</Text>
+                            <Text style={styles.textoBotao}>{textoConfirmar}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

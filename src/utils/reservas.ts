@@ -1,3 +1,4 @@
+import { Quadra } from '../types/Quadra';
 import { Reserva } from '../types/Reservas';
 
 export function dataHoje(): string {
@@ -10,6 +11,18 @@ export function dataHoje(): string {
 export function horarioJaPassou(horario: string): boolean {
     const hora = Number(horario.split(':')[0]);
     return hora <= new Date().getHours();
+}
+
+export function horarioOcupado(reservas: Reserva[], quadraId: string, horario: string): boolean {
+    return reservas.some(
+        (r) => r.quadraId === quadraId && r.data === dataHoje() && r.horario === horario
+    );
+}
+
+export function horariosLivres(quadra: Quadra, reservas: Reserva[]): string[] {
+    return quadra.horarios.filter(
+        (h) => !horarioJaPassou(h) && !horarioOcupado(reservas, quadra.id, h)
+    );
 }
 
 export function reservaAtiva(reserva: Reserva): boolean {

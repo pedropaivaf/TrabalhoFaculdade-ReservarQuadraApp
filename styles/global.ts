@@ -20,14 +20,6 @@ export const globalStyles = StyleSheet.create({
         marginBottom: 10,
     },
 
-       tituloDicas: {
-        color: '#22c55e',
-        fontSize: 28,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-
     subtitulo: {
         color: '#fff',
         fontSize: 18,

@@ -3,12 +3,14 @@ import { Tabs, Redirect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const CHAVE_LOGADO = 'usuario_logado';
+
 export default function LayoutAbas() {
     const [verificando, setVerificando] = useState(true);
     const [logado, setLogado] = useState(false);
 
     useEffect(() => {
-        AsyncStorage.getItem('usuario_logado')
+        AsyncStorage.getItem(CHAVE_LOGADO)
             .then((res) => {
                 setLogado(res !== null);
             })

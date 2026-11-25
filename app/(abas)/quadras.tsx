@@ -1,14 +1,16 @@
-import { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { globalStyles } from '../../styles/global';
 import { Quadra } from '../../src/types/Quadra';
 import { Reserva } from '../../src/types/Reservas';
 import { Usuario } from '../../src/types/Usuario';
-import { dataHoje, horarioJaPassou, reservaAtiva } from '../../src/utils/reservas';
-import ModalConfirmacao from '../../src/components/ModalConfirmacao';
+import { dataHoje, horarioJaPassou, horarioOcupado, reservaAtiva } from '../../src/utils/reservas';
+import { CardQuadra } from '../../src/components/CardQuadra';
+import { ModalConfirmacao } from '../../src/components/ModalConfirmacao';
+import { reservaEvents } from '../../src/events/reservaEvent';
 import dadosQuadras from '../../src/types/data/quadras.json';
 
 const quadras: Quadra[] = dadosQuadras;
@@ -25,27 +27,33 @@ export default function QuadrasScreen() {
     const [usuario, setUsuario] = useState<Usuario | null>(null);
     const [selecao, setSelecao] = useState<Selecao | null>(null);
 
-    useFocusEffect(
-        useCallback(() => {
-            AsyncStorage.getItem(CHAVE_LOGADO)
-                .then((res) => {
-                    setUsuario(res ? JSON.parse(res) : null);
-                })
-                .catch((err) => console.log(err));
-
-            AsyncStorage.getItem(CHAVE_RESERVAS)
-                .then((res) => {
-                    setReservas(res ? JSON.parse(res) : []);
-                })
-                .catch((err) => console.log(err));
-        }, [])
-    );
-
-    const horarioOcupado = (quadraId: string, horario: string) => {
-        return reservas.some(
-            (r) => r.quadraId === quadraId && r.data === dataHoje() && r.horario === horario
-        );
+    const carregarReservas = () => {
+        AsyncStorage.getItem(CHAVE_RESERVAS)
+            .then((res) => {
+                setReservas(res ? JSON.parse(res) : []);
+            })
+            .catch((err) => console.log(err));
     };
+
+    // Para primeira vez que carrega a tela
+    useEffect(() => {
+        AsyncStorage.getItem(CHAVE_LOGADO)
+            .then((res) => {
+                setUsuario(res ? JSON.parse(res) : null);
+            })
+            .catch((err) => console.log(err));
+
+        carregarReservas();
+    }, []);
+
+    // Para quando uma reserva é feita ou cancelada em outra aba
+    useEffect(() => {
+        // ouvir evento e recarregar reservas
+        const subscription = reservaEvents.addListener('reservas:changed', carregarReservas);
+
+        // limpar quando desmontar
+        return () => subscription.remove();
+    }, []);
 
     const escolherHorario = (quadra: Quadra, horario: string) => {
         if (!usuario) {
@@ -59,7 +67,7 @@ export default function QuadrasScreen() {
             return;
         }
 
-        if (horarioOcupado(quadra.id, horario)) {
+        if (horarioOcupado(reservas, quadra.id, horario)) {
             alert('Este horário já está reservado!');
             return;
         }
@@ -97,6 +105,7 @@ export default function QuadrasScreen() {
             .then(() => {
                 setReservas(listaAtualizada);
                 setSelecao(null);
+                reservaEvents.emit('reservas:changed'); // notifica que as reservas mudaram
             })
             .catch((err) => {
                 console.log(err);
@@ -114,34 +123,10 @@ export default function QuadrasScreen() {
 
                 <FlatList
                     data={quadras}
-                    showsVerticalScrollIndicator={false}
                     keyExtractor={(item) => item.id}
+                    showsVerticalScrollIndicator={false}
                     renderItem={({ item }) => (
-                        <View style={styles.card}>
-                            <Text style={styles.nome}>{item.nome}</Text>
-                            <Text style={styles.esporte}>{item.esporte}</Text>
-                            <Text style={styles.preco}>R$ {item.precoHora.toFixed(2)} / hora</Text>
-
-                            <View style={styles.listaHorarios}>
-                                {item.horarios.map((horario) => {
-                                    const indisponivel =
-                                        horarioJaPassou(horario) || horarioOcupado(item.id, horario);
-
-                                    return (
-                                        <TouchableOpacity
-                                            key={horario}
-                                            style={[styles.horario, indisponivel && styles.horarioIndisponivel]}
-                                            disabled={indisponivel}
-                                            onPress={() => escolherHorario(item, horario)}
-                                        >
-                                            <Text style={[styles.textoHorario, indisponivel && styles.textoIndisponivel]}>
-                                                {horario}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-                        </View>
+                        <CardQuadra quadra={item} reservas={reservas} onEscolherHorario={escolherHorario} />
                     )}
                 />
             </View>
@@ -161,55 +146,3 @@ export default function QuadrasScreen() {
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    card: {
-        backgroundColor: '#1b1b1b',
-        borderWidth: 1,
-        borderColor: '#2a2a2a',
-        borderRadius: 10,
-        padding: 16,
-        marginBottom: 12,
-    },
-    nome: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    esporte: {
-        color: '#22c55e',
-        fontSize: 14,
-        marginTop: 4,
-    },
-    preco: {
-        color: '#fff',
-        fontSize: 16,
-        marginTop: 8,
-    },
-    listaHorarios: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginTop: 12,
-    },
-    horario: {
-        borderWidth: 1,
-        borderColor: '#22c55e',
-        borderRadius: 6,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-    },
-    horarioIndisponivel: {
-        borderColor: '#333',
-        backgroundColor: '#222',
-    },
-    textoHorario: {
-        color: '#22c55e',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    textoIndisponivel: {
-        color: '#555',
-        textDecorationLine: 'line-through',
-    },
-});

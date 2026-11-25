@@ -61,14 +61,18 @@ app/
     └── perfil.tsx       # Perfil e sair
 src/
 ├── components/
-│   └── ModalConfirmacao.tsx
+│   ├── CardQuadra.tsx       # Card de quadra com os horários
+│   ├── ItemReserva.tsx      # Card de reserva com cancelar
+│   └── ModalConfirmacao.tsx # Tela de confirmação reutilizável
+├── events/
+│   └── reservaEvent.ts      # Avisa as abas quando uma reserva muda
 ├── types/
 │   ├── Quadra.ts
 │   ├── Reservas.ts
 │   ├── Usuario.ts
 │   └── data/quadras.json
 └── utils/
-    └── reservas.ts      # Funções de data e horário
+    └── reservas.ts      # Funções de data, horário e disponibilidade
 styles/
 └── global.ts
 ```

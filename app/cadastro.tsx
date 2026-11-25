@@ -13,6 +13,14 @@ export default function CadastroScreen() {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
 
+    const voltarParaLogin = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.replace('/');
+        }
+    };
+
     const cadastrarUsuario = () => {
         if (!nome.trim() || !email.trim() || !senha.trim()) {
             alert('Preencha todos os campos!');
@@ -24,7 +32,9 @@ export default function CadastroScreen() {
             return;
         }
 
-        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+        const emailFormatado = email.trim().toLowerCase();
+
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFormatado);
         if (!emailValido) {
             alert('Digite um e-mail válido.');
             return;
@@ -39,7 +49,7 @@ export default function CadastroScreen() {
             .then((res) => {
                 const usuarios: Usuario[] = res ? JSON.parse(res) : [];
 
-                const repetidos = usuarios.filter((u) => u.email === email.trim());
+                const repetidos = usuarios.filter((u) => u.email.toLowerCase() === emailFormatado);
                 if (repetidos.length > 0) {
                     alert('Este e-mail já está cadastrado!');
                     return;
@@ -48,7 +58,7 @@ export default function CadastroScreen() {
                 const novoUsuario: Usuario = {
                     id: String(Date.now()),
                     nome: nome.trim(),
-                    email: email.trim(),
+                    email: emailFormatado,
                     senha: senha,
                 };
 
@@ -57,7 +67,7 @@ export default function CadastroScreen() {
                 AsyncStorage.setItem(CHAVE_USUARIOS, JSON.stringify(listaAtualizada))
                     .then(() => {
                         alert('Cadastro realizado com sucesso!');
-                        router.push('/');
+                        voltarParaLogin();
                     });
             })
             .catch((err) => {
@@ -105,7 +115,7 @@ export default function CadastroScreen() {
                     <Text style={globalStyles.textoBotao}>Cadastrar</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.linkVoltar} onPress={() => router.push('/')}>
+                <TouchableOpacity style={styles.linkVoltar} onPress={voltarParaLogin}>
                     <Text style={styles.textoLink}>Já tem conta? Faça login</Text>
                 </TouchableOpacity>
             </View>
