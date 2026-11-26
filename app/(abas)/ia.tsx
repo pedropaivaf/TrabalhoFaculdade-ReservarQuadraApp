@@ -20,6 +20,17 @@ const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 // Se o primeiro modelo estiver sobrecarregado, o app tenta o próximo da lista
 const MODELOS_GEMINI = ['gemini-3.1-flash-lite', 'gemini-3.5-flash'];
 
+// Formato que a IA é obrigada a seguir: UMA quadra, UM horário e o motivo
+const FORMATO_RESPOSTA = {
+    type: 'OBJECT',
+    properties: {
+        quadraId: { type: 'STRING', nullable: true },
+        horario: { type: 'STRING', nullable: true },
+        motivo: { type: 'STRING' },
+    },
+    required: ['quadraId', 'horario', 'motivo'],
+};
+
 function urlGemini(modelo: string): string {
     return `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`;
 }
@@ -108,10 +119,12 @@ export default function IAScreen() {
             'Estes são os únicos horários livres hoje:\n' +
             disponiveis.join('\n') +
             `\n\nPedido do cliente: "${pedido.trim()}"\n\n` +
-            'Escolha a melhor opção que atenda o pedido, usando somente os horários livres acima. ' +
-            'Responda apenas com JSON neste formato: ' +
-            '{"quadraId": "1", "horario": "20:00", "motivo": "frase curta em português explicando a escolha"}. ' +
-            'Se nenhuma opção atender, responda {"quadraId": null, "horario": null, "motivo": "explique o motivo em português"}.';
+            'Escolha UMA única opção, a que melhor atende o pedido, usando somente os horários livres acima. ' +
+            'Se o pedido não disser o esporte, escolha a opção mais barata. ' +
+            'Se o horário pedido não estiver livre, sugira o horário livre mais próximo e explique no motivo. ' +
+            'O campo quadraId é o id da quadra e o horario fica no formato HH:MM. ' +
+            'O motivo é uma frase curta em português explicando a escolha, sem dizer que a reserva foi feita. ' +
+            'Se nenhuma opção atender, use quadraId e horario como null e explique o motivo.';
 
         setCarregando(true);
         setSugestao(null);
@@ -123,6 +136,10 @@ export default function IAScreen() {
     const consultarIA = (prompt: string, indiceModelo: number) => {
         let tentandoOutroModelo = false;
 
+        // se a IA não responder em 15 segundos, cancela a requisição
+        const controle = new AbortController();
+        const tempoLimite = setTimeout(() => controle.abort(), 15000);
+
         fetch(urlGemini(MODELOS_GEMINI[indiceModelo]), {
             method: 'POST',
             headers: {
@@ -131,28 +148,27 @@ export default function IAScreen() {
             },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: 'application/json' },
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    responseSchema: FORMATO_RESPOSTA,
+                },
             }),
+            signal: controle.signal,
         })
             .then((resposta) => resposta.json())
             .then((data) => {
                 // a API respondeu com erro (ex: modelo sobrecarregado)
                 if (data.error) {
-                    if (indiceModelo + 1 < MODELOS_GEMINI.length) {
-                        tentandoOutroModelo = true;
-                        consultarIA(prompt, indiceModelo + 1);
-                        return;
-                    }
-
-                    setMensagem('A IA está indisponível no momento. Tente novamente em instantes.');
-                    console.log('Erro da API:', data.error.message);
-                    return;
+                    throw new Error(data.error.message);
                 }
 
                 const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                const resultado = JSON.parse(texto);
+                const resposta = JSON.parse(texto);
 
-                const quadra = quadras.find((q) => q.id === resultado.quadraId);
+                // garante que vamos usar só uma opção, mesmo se vier uma lista
+                const resultado = Array.isArray(resposta) ? resposta[0] : resposta;
+
+                const quadra = quadras.find((q) => q.id === String(resultado.quadraId));
 
                 if (quadra && horariosLivres(quadra, reservas).includes(resultado.horario)) {
                     setSugestao({ quadra, horario: resultado.horario, motivo: resultado.motivo });
@@ -162,9 +178,18 @@ export default function IAScreen() {
             })
             .catch((erro) => {
                 console.log('Erro:', erro);
-                setMensagem('Erro ao conectar com a IA. Tente novamente.');
+
+                // falhou ou demorou demais: tenta o próximo modelo da lista
+                if (indiceModelo + 1 < MODELOS_GEMINI.length) {
+                    tentandoOutroModelo = true;
+                    consultarIA(prompt, indiceModelo + 1);
+                    return;
+                }
+
+                setMensagem('A IA está indisponível no momento. Tente novamente em instantes.');
             })
             .finally(() => {
+                clearTimeout(tempoLimite);
                 if (!tentandoOutroModelo) {
                     setCarregando(false);
                 }
