@@ -17,7 +17,12 @@ const CHAVE_LOGADO = 'usuario_logado';
 const CHAVE_RESERVAS = 'reservas';
 
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-const URL_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+// Se o primeiro modelo estiver sobrecarregado, o app tenta o próximo da lista
+const MODELOS_GEMINI = ['gemini-3.1-flash-lite', 'gemini-3.5-flash'];
+
+function urlGemini(modelo: string): string {
+    return `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`;
+}
 
 type Sugestao = {
     quadra: Quadra;
@@ -112,11 +117,17 @@ export default function IAScreen() {
         setSugestao(null);
         setMensagem('');
 
-        fetch(URL_GEMINI, {
+        consultarIA(prompt, 0);
+    };
+
+    const consultarIA = (prompt: string, indiceModelo: number) => {
+        let tentandoOutroModelo = false;
+
+        fetch(urlGemini(MODELOS_GEMINI[indiceModelo]), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-goog-api-key': API_KEY,
+                'x-goog-api-key': API_KEY || '',
             },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
@@ -125,6 +136,19 @@ export default function IAScreen() {
         })
             .then((resposta) => resposta.json())
             .then((data) => {
+                // a API respondeu com erro (ex: modelo sobrecarregado)
+                if (data.error) {
+                    if (indiceModelo + 1 < MODELOS_GEMINI.length) {
+                        tentandoOutroModelo = true;
+                        consultarIA(prompt, indiceModelo + 1);
+                        return;
+                    }
+
+                    setMensagem('A IA está indisponível no momento. Tente novamente em instantes.');
+                    console.log('Erro da API:', data.error.message);
+                    return;
+                }
+
                 const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
                 const resultado = JSON.parse(texto);
 
@@ -140,7 +164,11 @@ export default function IAScreen() {
                 console.log('Erro:', erro);
                 setMensagem('Erro ao conectar com a IA. Tente novamente.');
             })
-            .finally(() => setCarregando(false));
+            .finally(() => {
+                if (!tentandoOutroModelo) {
+                    setCarregando(false);
+                }
+            });
     };
 
     const confirmarReserva = () => {
