@@ -10,7 +10,8 @@ export function dataHoje(): string {
 
 export function horarioJaPassou(horario: string): boolean {
     const hora = Number(horario.split(':')[0]);
-    return hora <= new Date().getHours();
+    const horaDoDia = hora === 0 ? 24 : hora;
+    return horaDoDia <= new Date().getHours();
 }
 
 export function horarioOcupado(reservas: Reserva[], quadraId: string, horario: string): boolean {
